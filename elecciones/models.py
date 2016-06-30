@@ -1,21 +1,31 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from boto.dynamodb.condition import NULL
 
 class Comuna(models.Model):
     nombre = models.CharField(max_length=45, blank=True, null=True)
     region_id = models.IntegerField(blank=True, null=True)
-    distrito_id = models.IntegerField(blank=True, null=True)
-    external_id = models.CharField(max_length=45)
+#    distrito_id = models.IntegerField(blank=True, null=True)
+#    external_id = models.CharField(max_length=45)
 
     class Meta:
         managed = False
         db_table = 'comuna'
 
 class Candidato(models.Model):
-    nombre = models.CharField(max_length=45, blank=True, null=True)
-    external_id = models.CharField(max_length=45, blank=True, null=True)
-    sexo = models.CharField(max_length=45, blank=True, null=True)
+    @property
+    def fullname(self):
+        if self.nombres == None:
+            return None
+        else:
+            return (self.nombres.split(' ')[0] + ' ' + self.apellido_paterno).lower()
+    
+    nombres = models.CharField(max_length=45, blank=True, null=True)
+    apellido_paterno = models.CharField(max_length=45, blank=True, null=True)
+    apellido_materno = models.CharField(max_length=45, blank=True, null=True)
+    #external_id = models.CharField(max_length=45, blank=True, null=True)
+    #sexo = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -35,6 +45,15 @@ class EleccionTipo(models.Model):
     class Meta:
         managed = False
         db_table = 'eleccion_tipo'
+
+class EleccionFecha(models.Model):
+    anno = models.IntegerField()
+    eleccion_tipo = models.ForeignKey('EleccionTipo', models.DO_NOTHING)
+    vuelta = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'eleccion_fecha'
 
 class Pacto(models.Model):
     eleccion_grupo = models.ForeignKey(EleccionGrupo, models.DO_NOTHING)
@@ -88,13 +107,14 @@ class Resultado(models.Model):
     pacto_txt = models.CharField(max_length=45, blank=True, null=True)
     electo = models.IntegerField(blank=True, null=True)
     votos_cnt = models.IntegerField(blank=True, null=True)
+    posicion = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'resultado'
 
 
-class Voto(models.Model):
+class Participacion(models.Model):
     eleccion_tipo = models.ForeignKey(EleccionTipo, models.DO_NOTHING)
     comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
     anno = models.IntegerField()
@@ -106,5 +126,5 @@ class Voto(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'voto'
+        db_table = 'participacion'
 
