@@ -3,10 +3,21 @@ from __future__ import unicode_literals
 from django.db import models
 from boto.dynamodb.condition import NULL
 
+class Region(models.Model):
+    nombre = models.CharField(max_length=255)
+    numero = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'region'
+
+
 class Comuna(models.Model):
     nombre = models.CharField(max_length=45, blank=True, null=True)
-    region_id = models.IntegerField(blank=True, null=True)
-#    distrito_id = models.IntegerField(blank=True, null=True)
+    region = models.ForeignKey('Region', models.DO_NOTHING, blank=True, null=True)
+#    region_id = models.IntegerField(blank=True, null=True)
+    distrito = models.IntegerField(blank=True, null=True)
+    circunscripcion = models.IntegerField(blank=True, null=True)
 #    external_id = models.CharField(max_length=45)
 
     class Meta:
