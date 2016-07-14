@@ -26,11 +26,18 @@ class Comuna(models.Model):
 
 class Candidato(models.Model):
     @property
-    def fullname(self):
+    def nombre_corto(self):
         if self.nombres == None:
             return None
         else:
             return (self.nombres.split(' ')[0] + ' ' + self.apellido_paterno).lower()
+
+    @property
+    def nombre_completo(self):
+        if self.nombres == None:
+            return None
+        else:
+            return (self.nombres + ' ' + self.apellido_paterno + ' ' + self.apellido_materno).lower()
     
     nombres = models.CharField(max_length=45, blank=True, null=True)
     apellido_paterno = models.CharField(max_length=45, blank=True, null=True)

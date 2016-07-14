@@ -69,6 +69,11 @@ class EleccionTipoDetail(APIView):
             
             eleccion['pactos'] = pactosSer
             eleccion['partidos'] = partidosSer
+            
+            cursor.execute("SELECT COUNT(CASE WHEN elecciones=1 THEN 1 END) as nuevos, COUNT(CASE WHEN elecciones>1 THEN 1 END) as historicos FROM (SELECT r.candidato_id, count(DISTINCT anno) as elecciones FROM resultado r, (SELECT candidato_id from resultado WHERE anno=%s AND eleccion_tipo_id=%s GROUP by candidato_id) as foo WHERE r.candidato_id=foo.candidato_id AND r.anno<=%s GROUP BY candidato_id) foo", [eleccion['anno'], eleccion['eleccion_tipo']['id'], eleccion['anno']])
+            row = cursor.fetchone()
+            eleccion['candidatos_nuevos_cnt'] = row[0]
+            eleccion['candidatos_historicos_cnt'] = row[1]
         
         tipoSer['elecciones'] = eleccionesSer
         

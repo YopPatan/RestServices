@@ -9,7 +9,7 @@ class RegionSerial(serializers.ModelSerializer):
 class ComunaSerial(serializers.ModelSerializer):
     class Meta:
         model = Comuna
-        fields = ('id', 'nombre')
+        fields = ('id', 'nombre', 'region')
 
 class CandidatoSerial(serializers.ModelSerializer):
 #    fullname = serializers.SerializerMethodField('getfullname')
@@ -18,7 +18,7 @@ class CandidatoSerial(serializers.ModelSerializer):
     
     class Meta:
         model = Candidato
-        fields = ('id', 'fullname')
+        fields = ('id', 'nombre_corto', 'nombre_completo')
         
 class EleccionTipoSerial(serializers.ModelSerializer):
     class Meta:
