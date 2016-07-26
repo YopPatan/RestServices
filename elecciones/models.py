@@ -30,20 +30,20 @@ class Candidato(models.Model):
         if self.nombres == None:
             return None
         else:
-            return (self.nombres.split(' ')[0] + ' ' + self.apellido_paterno).lower()
+            return (self.nombres.split(' ')[0] + ' ' + self.apellido_paterno)
 
     @property
     def nombre_completo(self):
         if self.nombres == None:
             return None
         else:
-            return (self.nombres + ' ' + self.apellido_paterno + ' ' + self.apellido_materno).lower()
+            return (self.nombres + ' ' + self.apellido_paterno + ' ' + self.apellido_materno)
     
     nombres = models.CharField(max_length=45, blank=True, null=True)
     apellido_paterno = models.CharField(max_length=45, blank=True, null=True)
     apellido_materno = models.CharField(max_length=45, blank=True, null=True)
     #external_id = models.CharField(max_length=45, blank=True, null=True)
-    #sexo = models.CharField(max_length=45, blank=True, null=True)
+    sexo = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -74,6 +74,13 @@ class EleccionFecha(models.Model):
         db_table = 'eleccion_fecha'
 
 class Pacto(models.Model):
+    @property
+    def nombre_corto(self):
+        if len(self.nombre) > 30:
+            return self.nombre[:26] + "..."
+        else:
+            return self.nombre
+    
     eleccion_grupo = models.ForeignKey(EleccionGrupo, models.DO_NOTHING)
     anno = models.IntegerField()
     nombre = models.CharField(max_length=45, blank=True, null=True)
@@ -91,24 +98,16 @@ class Partido(models.Model):
         managed = False
         db_table = 'partido'
 
-class Padron(models.Model):
-    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
-    anno = models.IntegerField()
-    votantes_cnt = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'padron'
-
 class Poblacion(models.Model):
     comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
     anno = models.IntegerField(blank=True, null=True)
-    poblacion_cnt = models.IntegerField(blank=True, null=True)
+#    poblacion_cnt = models.IntegerField(blank=True, null=True)
     poblacion_adultos_cnt = models.IntegerField(blank=True, null=True)
-    hombres_cnt = models.IntegerField(blank=True, null=True)
-    mujeres_cnt = models.IntegerField(blank=True, null=True)
-    hombres_adultos_cnt = models.IntegerField(blank=True, null=True)
-    mujeres_adultos_cnt = models.IntegerField(blank=True, null=True)
+    padron_cnt = models.IntegerField(blank=True, null=True)
+#    hombres_cnt = models.IntegerField(blank=True, null=True)
+#    mujeres_cnt = models.IntegerField(blank=True, null=True)
+#    hombres_adultos_cnt = models.IntegerField(blank=True, null=True)
+#    mujeres_adultos_cnt = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -145,4 +144,47 @@ class Participacion(models.Model):
     class Meta:
         managed = False
         db_table = 'participacion'
+
+class Pobreza(models.Model):
+#    id = models.AutoField(unique=True)
+    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
+    poblacion_cnt = models.IntegerField()
+    poblacion_idx = models.FloatField()
+    anno = models.IntegerField()
+    limite_inferior_idx = models.FloatField()
+    limite_superior_idx = models.FloatField()
+
+    class Meta:
+        managed = False
+        db_table = 'pobreza'
+
+class Educacion(models.Model):
+#    id = models.AutoField(unique=True)
+    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
+    establecimiento_id = models.IntegerField()
+    establecimiento_txt = models.CharField(max_length=45, blank=True, null=True)
+    anno = models.IntegerField()
+    colegios_cnt = models.IntegerField()
+    psu_promedio = models.FloatField()
+    alumnos_cnt = models.IntegerField()
+    psu_desviacion = models.FloatField()
+
+    class Meta:
+        managed = False
+        db_table = 'educacion'
+
+class Delincuencia(models.Model):
+#    id = models.AutoField(unique=True)
+    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
+    anno = models.IntegerField()
+    dmcs_denuncias = models.IntegerField()
+    dmcs_detenciones = models.IntegerField()
+    vif_denuncias = models.IntegerField()
+    vif_detenciones = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'delincuencia'
+
+
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido
+from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido, Pobreza, Delincuencia, Educacion, Poblacion
 
 class RegionSerial(serializers.ModelSerializer):
     class Meta:
@@ -12,13 +12,9 @@ class ComunaSerial(serializers.ModelSerializer):
         fields = ('id', 'nombre', 'region')
 
 class CandidatoSerial(serializers.ModelSerializer):
-#    fullname = serializers.SerializerMethodField('getfullname')
-#    def getfullname(self, candidato):
-#        return candidato.nombres
-    
     class Meta:
         model = Candidato
-        fields = ('id', 'nombre_corto', 'nombre_completo')
+        fields = ('id', 'nombre_corto', 'nombre_completo', 'sexo')
         
 class EleccionTipoSerial(serializers.ModelSerializer):
     class Meta:
@@ -26,8 +22,6 @@ class EleccionTipoSerial(serializers.ModelSerializer):
         fields = ('id', 'nombre') 
 
 class EleccionSerial(serializers.ModelSerializer):
-#    eleccion_tipo = serializers.SlugRelatedField(many=False, read_only=True, slug_field='nombre', allow_null=True)
-#    adultos_cnt = serializers.IntegerField(required=False)
     eleccion_tipo = EleccionTipoSerial(many=False, read_only=True)
     
     class Meta:
@@ -37,12 +31,35 @@ class EleccionSerial(serializers.ModelSerializer):
 class PactoSerial(serializers.ModelSerializer):
     class Meta:
         model = Pacto
-        fields = ('id', 'nombre', 'anno')
+        fields = ('id', 'nombre', 'anno', 'nombre_corto')
         
 class PartidoSerial(serializers.ModelSerializer):
     class Meta:
         model = Partido
         fields = ('id', 'nombre', 'siglas')
+
+class PobrezaSerial(serializers.ModelSerializer):
+    class Meta:
+        model = Pobreza
+        fields = ('anno', 'poblacion_cnt', 'poblacion_idx')
+
+class EducacionSerial(serializers.ModelSerializer):
+    comuna = ComunaSerial(many=False, read_only=True, required=False)
+    
+    class Meta:
+        model = Educacion
+        fields = ('comuna', 'establecimiento_id', 'establecimiento_txt', 'anno', 'colegios_cnt', 'psu_promedio', 'alumnos_cnt')
+
+class DelincuenciaSerial(serializers.ModelSerializer):
+    class Meta:
+        model = Delincuencia
+        fields = ('anno', 'dmcs_denuncias', 'dmcs_detenciones' ,'vif_denuncias', 'vif_detenciones')
+        
+class PoblacionSerial(serializers.ModelSerializer):
+    class Meta:
+        model = Poblacion
+        fields = ('anno', 'padron_cnt')
+
 
 class ParticipacionSerial(serializers.ModelSerializer):
 #    comuna = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_id', allow_null=True)
@@ -60,10 +77,11 @@ class ResultadoSerial(serializers.ModelSerializer):
     candidato = CandidatoSerial(many=False, read_only=True, required=False)
     pacto = PactoSerial(many=False, read_only=True, required=False)
     partido = PartidoSerial(many=False, read_only=True, required=False)
+    eleccion_tipo = EleccionTipoSerial(many=False, read_only=True, required=False)
     
     class Meta:
         model = Resultado
-        fields = ('anno', 'comuna', 'candidato', 'partido', 'pacto', 'electo', 'votos_cnt', 'posicion')
+        fields = ('anno', 'comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'electo', 'votos_cnt', 'posicion')
 
 #class TotalesSerial(serializers.ModelSerializer):
 #    electos_cnt = serializers.IntegerField(required=False)
