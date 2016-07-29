@@ -1,5 +1,5 @@
-from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza
-from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial
+from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud
+from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial
 
 #from django.db import connection
 from django.db import connections
@@ -103,6 +103,11 @@ class ComunaDetail(APIView):
         pobreza = Pobreza.objects.filter(comuna_id=id)
         pobrezaSer = PobrezaSerial(pobreza, many=True).data
         comunaSer['pobreza'] = pobrezaSer
+
+        salud = Salud.objects.filter(comuna_id=id)
+        saludSer = SaludSerial(salud, many=True).data
+        comunaSer['salud'] = saludSer
+
         
         poblacion = Poblacion.objects.filter(comuna_id=id)
         poblacionSer = PoblacionSerial(poblacion, many=True).data
