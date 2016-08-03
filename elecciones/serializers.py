@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido, Pobreza, Delincuencia, Educacion, Poblacion, Salud
+from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido, Pobreza, Delincuencia, Educacion, Poblacion, Salud, Desempleo, Ambiente
 
 class RegionSerial(serializers.ModelSerializer):
     class Meta:
@@ -9,7 +9,15 @@ class RegionSerial(serializers.ModelSerializer):
 class ComunaSerial(serializers.ModelSerializer):
     class Meta:
         model = Comuna
-        fields = ('id', 'nombre', 'region')
+        fields = ('id', 'nombre')
+
+class AmbienteSerial(serializers.ModelSerializer):
+    comuna = ComunaSerial(many=False, read_only=True, required=False)
+    
+    class Meta:
+        model = Ambiente
+        fields = ('comuna', 'anno', 'metros_idx', 'imagen')
+
 
 class CandidatoSerial(serializers.ModelSerializer):
     class Meta:
@@ -39,9 +47,16 @@ class PartidoSerial(serializers.ModelSerializer):
         fields = ('id', 'nombre', 'siglas')
 
 class PobrezaSerial(serializers.ModelSerializer):
+    comuna = ComunaSerial(many=False, read_only=True, required=False)
     class Meta:
         model = Pobreza
-        fields = ('anno', 'poblacion_cnt', 'poblacion_idx')
+        fields = ('comuna', 'anno', 'poblacion_cnt', 'poblacion_idx')
+        
+class DesempleoSerial(serializers.ModelSerializer):
+#    region = RegionSerial(many=False, read_only=True, required=False)
+    class Meta:
+        model = Desempleo
+        fields = ('anno', 'poblacion_idx')
 
 class EducacionSerial(serializers.ModelSerializer):
     comuna = ComunaSerial(many=False, read_only=True, required=False)

@@ -24,6 +24,18 @@ class Comuna(models.Model):
         managed = False
         db_table = 'comuna'
 
+class Ambiente(models.Model):
+#    id = models.AutoField(unique=True)
+    metros_idx = models.DecimalField(max_digits=6, decimal_places=2)
+    anno = models.IntegerField(blank=True, null=True)
+    imagen = models.CharField(max_length=255)
+    comuna = models.ForeignKey('Comuna', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'ambiente'
+
+
 class Candidato(models.Model):
     @property
     def nombre_corto(self):
@@ -146,13 +158,12 @@ class Participacion(models.Model):
         db_table = 'participacion'
 
 class Pobreza(models.Model):
-#    id = models.AutoField(unique=True)
     comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
     poblacion_cnt = models.IntegerField()
-    poblacion_idx = models.FloatField()
+    poblacion_idx = models.DecimalField(max_digits=6, decimal_places=2)
     anno = models.IntegerField()
-    limite_inferior_idx = models.FloatField()
-    limite_superior_idx = models.FloatField()
+    limite_inferior_idx = models.DecimalField(max_digits=6, decimal_places=2)
+    limite_superior_idx = models.DecimalField(max_digits=6, decimal_places=2)
 
     class Meta:
         managed = False
@@ -187,25 +198,35 @@ class Delincuencia(models.Model):
         db_table = 'delincuencia'
         
 class Salud(models.Model):
-#    comuna_txt = models.TextField(blank=True, null=True)
-    comuna_id = models.IntegerField(blank=True, null=True)
+    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
     anno = models.IntegerField(blank=True, null=True)
-    emp_hombres_20_44 = models.FloatField(blank=True, null=True)
-    emp_mujeres_45_64 = models.FloatField(blank=True, null=True)
-    emp_adulto_mayor = models.FloatField(blank=True, null=True)
-    control_embarazo_hasta_14_semanas = models.FloatField(blank=True, null=True)
-    odontologia_hasta_20 = models.FloatField(blank=True, null=True)
-    ap_gestion_reclamos = models.FloatField(blank=True, null=True)
-    cobertura_diabetes_sobre_15 = models.FloatField(blank=True, null=True)
-    cobertura_hta_sobre_15 = models.FloatField(blank=True, null=True)
-    cobertura_desarrollo_psicomotor_12_23_meses = models.FloatField(blank=True, null=True)
-    visita_domiciliaria = models.FloatField(blank=True, null=True)
-    cobertura_asma_y_epoc = models.FloatField(blank=True, null=True)
-    cobertura_psiquiatrica_sobre_5 = models.FloatField(blank=True, null=True)
+    emp_hombres_20_44 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    emp_mujeres_45_64 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    emp_adulto_mayor = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    control_embarazo_hasta_14_semanas = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    odontologia_hasta_20 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    ap_gestion_reclamos = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    cobertura_diabetes_sobre_15 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    cobertura_hta_sobre_15 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    cobertura_desarrollo_psicomotor_12_23_meses = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    visita_domiciliaria = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    cobertura_asma_y_epoc = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    cobertura_psiquiatrica_sobre_5 = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'salud'
+        
+class Desempleo(models.Model):
+#    id = models.AutoField(unique=True)
+    region = models.ForeignKey(Region, models.DO_NOTHING)
+    anno = models.IntegerField(blank=True, null=True)
+    poblacion_idx = models.DecimalField(max_digits=6, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'desempleo'
+
 
 
 

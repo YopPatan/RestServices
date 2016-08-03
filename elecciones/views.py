@@ -1,5 +1,5 @@
-from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud
-from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial
+from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud, Desempleo, Ambiente
+from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial, DesempleoSerial, AmbienteSerial
 
 #from django.db import connection
 from django.db import connections
@@ -7,6 +7,7 @@ from django.db import connections
 from django.db.models import Q, Count, Sum, Case, When, Max, Min
 from rest_framework.views import APIView
 from rest_framework.response import Response
+import numpy as np
 
 class EleccionList(APIView):
 
@@ -84,6 +85,10 @@ class ComunaDetail(APIView):
     def get(self, request, id, tipo_id, format=None):
         comuna = Comuna.objects.get(pk=id)
         comunaSer = ComunaSerial(comuna, many=False).data
+        
+        region = Region.objects.get(pk=comuna.region.id)
+        regionSer = RegionSerial(region, many=False).data
+        comunaSer['region'] = regionSer
 
         delincuencia = Delincuencia.objects.filter(comuna_id=id)
         delincuenciaSer = DelincuenciaSerial(delincuencia, many=True).data
@@ -92,14 +97,7 @@ class ComunaDetail(APIView):
         educacion = Educacion.objects.filter(comuna_id=id)
         educacionSer = EducacionSerial(educacion, many=True).data
         comunaSer['educacion'] = educacionSer
-        
-        extremos_valores = Educacion.objects.filter(establecimiento_id=1).aggregate(Min('psu_promedio'), Max('psu_promedio'));
-        extremos = Educacion.objects.filter(Q(psu_promedio=extremos_valores['psu_promedio__min']) | Q(psu_promedio=extremos_valores['psu_promedio__max']))
-        extremosSer = EducacionSerial(extremos, many=True).data
-        comunaSer['educacion_extremos'] = extremosSer
-        
-        #extremos = Educacion.objects.annotate(psu_promedio=Min('psu_promedio'), max_price=Max('books__price'))
-
+               
         pobreza = Pobreza.objects.filter(comuna_id=id)
         pobrezaSer = PobrezaSerial(pobreza, many=True).data
         comunaSer['pobreza'] = pobrezaSer
@@ -107,7 +105,31 @@ class ComunaDetail(APIView):
         salud = Salud.objects.filter(comuna_id=id)
         saludSer = SaludSerial(salud, many=True).data
         comunaSer['salud'] = saludSer
+        
+        ambiente = Ambiente.objects.filter(comuna_id=id)
+        ambienteSer = AmbienteSerial(ambiente, many=True).data
+        comunaSer['ambiente'] = ambienteSer
+        
+        educacionLimit = Educacion.objects.filter(establecimiento_id=1).aggregate(Min('psu_promedio'), Max('psu_promedio'));
+        educacionExt = Educacion.objects.filter(Q(psu_promedio=educacionLimit['psu_promedio__min']) | Q(psu_promedio=educacionLimit['psu_promedio__max'])).order_by('psu_promedio')
+        educacionExtSer = EducacionSerial(educacionExt, many=True).data
 
+        pobrezaLimit = Pobreza.objects.aggregate(Min('poblacion_idx'), Max('poblacion_idx'));
+        pobrezaExt = Pobreza.objects.filter(Q(poblacion_idx=pobrezaLimit['poblacion_idx__min']) | Q(poblacion_idx=pobrezaLimit['poblacion_idx__max'])).order_by('poblacion_idx')
+        pobrezaExtSer = PobrezaSerial(pobrezaExt, many=True).data
+
+        ambienteLimit = Ambiente.objects.aggregate(Min('metros_idx'), Max('metros_idx'));
+        ambienteExt = Ambiente.objects.filter(Q(metros_idx=ambienteLimit['metros_idx__min']) | Q(metros_idx=ambienteLimit['metros_idx__max'])).order_by('metros_idx')
+        ambienteExtSer = AmbienteSerial(ambienteExt, many=True).data
+
+        comunaSer['extremos'] = {}
+        comunaSer['extremos']['educacion'] = educacionExtSer
+        comunaSer['extremos']['pobreza'] = pobrezaExtSer
+        comunaSer['extremos']['ambiente'] = ambienteExtSer
+
+        desempleo = Desempleo.objects.filter(region_id=comuna.region.id)
+        desempleoSer = DesempleoSerial(desempleo, many=True).data
+        comunaSer['desempleo'] = desempleoSer
         
         poblacion = Poblacion.objects.filter(comuna_id=id)
         poblacionSer = PoblacionSerial(poblacion, many=True).data
