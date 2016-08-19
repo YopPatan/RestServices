@@ -3,6 +3,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 import views
 
 urlpatterns = [
+    url(r'^generar/$', views.GenerateJson.as_view()),
     url(r'^eleccion/$', views.EleccionList.as_view()),
     url(r'^tipo/(?P<id>[0-9]+)$', views.EleccionTipoDetail.as_view()),
     url(r'^comuna/$', views.ComunaList.as_view()),

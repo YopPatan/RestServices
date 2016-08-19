@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido, Pobreza, Delincuencia, Educacion, Poblacion, Salud, Desempleo, Ambiente
+from models import Comuna, Participacion, Resultado, Pacto, Candidato, EleccionFecha, EleccionTipo, Region, Partido, Pobreza, Delincuencia, Educacion, Poblacion, Salud, Desempleo, Ambiente, EleccionGrupo, Representante
+
+class EleccionGrupoSerial(serializers.ModelSerializer):
+    class Meta:
+        model = EleccionGrupo
+        fields = ('id', 'nombre')
 
 class RegionSerial(serializers.ModelSerializer):
     class Meta:
@@ -27,7 +32,7 @@ class CandidatoSerial(serializers.ModelSerializer):
 class EleccionTipoSerial(serializers.ModelSerializer):
     class Meta:
         model = EleccionTipo
-        fields = ('id', 'nombre') 
+        fields = ('id', 'nombre', 'cargo') 
 
 class EleccionSerial(serializers.ModelSerializer):
     eleccion_tipo = EleccionTipoSerial(many=False, read_only=True)
@@ -98,3 +103,16 @@ class ResultadoSerial(serializers.ModelSerializer):
     class Meta:
         model = Resultado
         fields = ('anno', 'comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'electo', 'votos_cnt', 'posicion')
+        
+class RepresentanteSerial(serializers.ModelSerializer):
+    comuna = ComunaSerial(many=False, read_only=True, required=False)
+    candidato = CandidatoSerial(many=False, read_only=True, required=False)
+    pacto = PactoSerial(many=False, read_only=True, required=False)
+    partido = PartidoSerial(many=False, read_only=True, required=False)
+    eleccion_tipo = EleccionTipoSerial(many=False, read_only=True, required=False)
+    
+    class Meta:
+        model = Representante
+        fields = ('comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'imagen', 'facebook', 'twitter')
+
+        

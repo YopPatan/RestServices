@@ -71,6 +71,7 @@ class EleccionGrupo(models.Model):
 class EleccionTipo(models.Model):
     eleccion_grupo = models.ForeignKey(EleccionGrupo, models.DO_NOTHING)
     nombre = models.CharField(max_length=45, blank=True, null=True)
+    cargo = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -227,6 +228,21 @@ class Desempleo(models.Model):
         managed = False
         db_table = 'desempleo'
 
+class Representante(models.Model):
+    candidato = models.ForeignKey(Candidato, models.DO_NOTHING)
+    partido = models.ForeignKey(Partido, models.DO_NOTHING)
+#    partido_txt = models.CharField(max_length=255)
+    pacto = models.ForeignKey(Pacto, models.DO_NOTHING)
+#    pacto_txt = models.CharField(max_length=255)
+    imagen = models.CharField(max_length=255)
+    facebook = models.CharField(max_length=255)
+    twitter = models.CharField(max_length=255)
+    comuna = models.ForeignKey(Comuna, models.DO_NOTHING)
+    eleccion_tipo = models.ForeignKey(EleccionTipo, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'representante'
 
 
 

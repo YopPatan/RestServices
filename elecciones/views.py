@@ -1,6 +1,5 @@
-from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud, Desempleo, Ambiente
-from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial, DesempleoSerial, AmbienteSerial
-
+from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud, Desempleo, Ambiente, Representante
+from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial, DesempleoSerial, AmbienteSerial, EleccionGrupoSerial, RepresentanteSerial
 #from django.db import connection
 from django.db import connections
 
@@ -8,6 +7,70 @@ from django.db.models import Q, Count, Sum, Case, When, Max, Min
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import numpy as np
+
+import json
+import requests
+import os
+
+class GenerateJson(APIView):
+    def get(self, request, format=None):
+
+        elecciones_rest = requests.get('http://127.0.0.1:8000/elecciones/eleccion/?format=json')
+        elecciones_json = elecciones_rest.json()
+        elecciones_str = json.dumps(elecciones_json)
+        f = open('elecciones/json/elecciones.json', 'w')
+        f.write(elecciones_str)
+        f.close()
+        
+        municipales_rest = requests.get('http://127.0.0.1:8000/elecciones/tipo/5?format=json')
+        municipales_json = municipales_rest.json()
+        municipales_str = json.dumps(municipales_json)
+        f = open('elecciones/json/municipales.json', 'w')
+        f.write(municipales_str)
+        f.close()
+        
+        ranking_rest = requests.get('http://127.0.0.1:8000/elecciones/comuna/ranking/tipo/5?format=json')
+        ranking_json = ranking_rest.json()
+        ranking_str = json.dumps(ranking_json)
+        f = open('elecciones/json/ranking.json', 'w')
+        f.write(ranking_str)
+        f.close()
+        
+        candidatos_rest = requests.get('http://127.0.0.1:8000/elecciones/candidato/?format=json')
+        candidatos_json = candidatos_rest.json()
+        candidatos_str = json.dumps(candidatos_json)
+        f = open('elecciones/json/candidatos.json', 'w')
+        f.write(candidatos_str)
+        f.close()
+        
+        for candidato in candidatos_json:
+            candidato_rest = requests.get('http://127.0.0.1:8000/elecciones/candidato/' + str(candidato['candidato']['id']) + '?format=json')
+            candidato_json = candidato_rest.json()
+            candidato_str = json.dumps(candidato_json)
+            fc = open('elecciones/json/candidato_' + str(candidato['candidato']['id']) + '.json', 'w')
+            fc.write(candidato_str)
+            fc.close()
+
+        
+        comunas_rest = requests.get('http://127.0.0.1:8000/elecciones/comuna/?format=json')
+        comunas_json = comunas_rest.json()
+        comunas_str = json.dumps(comunas_json)
+        f = open('elecciones/json/comunas.json', 'w')
+        f.write(comunas_str)
+        f.close()
+        
+        for comuna in comunas_json:
+            if comuna['id'] == 0:
+                continue
+            #print 'http://127.0.0.1:8000/elecciones/comuna/' + str(comuna['id']) + '/tipo/3?format=json'
+            comuna_rest = requests.get('http://127.0.0.1:8000/elecciones/comuna/' + str(comuna['id']) + '/tipo/3?format=json')
+            comuna_json = comuna_rest.json()
+            comuna_str = json.dumps(comuna_json)
+            fc = open('elecciones/json/comuna_' + str(comuna['id']) + '.json', 'w')
+            fc.write(comuna_str)
+            fc.close()
+        
+        return Response(os.getcwd())
 
 class EleccionList(APIView):
 
@@ -18,6 +81,9 @@ class EleccionList(APIView):
         eleccionesSer = EleccionSerial(elecciones, many=True).data
         
         for eleccion in eleccionesSer:
+            grupo = EleccionTipo.objects.get(pk=eleccion['eleccion_tipo']['id']).eleccion_grupo
+            eleccion['eleccion_grupo'] = EleccionGrupoSerial(grupo, many=False).data
+            
             participacion = Participacion.objects.filter(anno=eleccion['anno'],
                                 eleccion_tipo_id=eleccion['eleccion_tipo']['id'],
                                 vuelta=eleccion['vuelta']).values('anno').annotate(emitidos_cnt=Sum('emitidos_cnt'),
@@ -34,6 +100,11 @@ class EleccionList(APIView):
             row = cursor.fetchone()
             eleccion['candidatos_nuevos_cnt'] = row[0]
             eleccion['candidatos_historicos_cnt'] = row[1]
+            
+            cursor.execute("SELECT COUNT(DISTINCT c.id, CASE WHEN sexo='HOMBRE' THEN 1 END) AS candidatos_hombres_cnt, COUNT(DISTINCT c.id, CASE WHEN sexo='MUJER' THEN 1 END) AS candidatos_mujeres_cnt FROM resultado r, candidato c WHERE r.candidato_id=c.id AND r.anno=%s AND r.eleccion_tipo_id=%s", [eleccion['anno'], eleccion['eleccion_tipo']['id']])
+            row = cursor.fetchone()
+            eleccion['candidatos_hombres_cnt'] = row[0]
+            eleccion['candidatos_mujeres_cnt'] = row[1]
             
         return Response(eleccionesSer)
     
@@ -75,6 +146,12 @@ class EleccionTipoDetail(APIView):
             row = cursor.fetchone()
             eleccion['candidatos_nuevos_cnt'] = row[0]
             eleccion['candidatos_historicos_cnt'] = row[1]
+
+            cursor.execute("SELECT COUNT(DISTINCT c.id, CASE WHEN sexo='HOMBRE' THEN 1 END) AS candidatos_hombres_cnt, COUNT(DISTINCT c.id, CASE WHEN sexo='MUJER' THEN 1 END) AS candidatos_mujeres_cnt FROM resultado r, candidato c WHERE r.candidato_id=c.id AND r.anno=%s AND r.eleccion_tipo_id=%s", [eleccion['anno'], eleccion['eleccion_tipo']['id']])
+            row = cursor.fetchone()
+            eleccion['candidatos_hombres_cnt'] = row[0]
+            eleccion['candidatos_mujeres_cnt'] = row[1]
+
         
         tipoSer['elecciones'] = eleccionesSer
         
@@ -131,9 +208,16 @@ class ComunaDetail(APIView):
         desempleoSer = DesempleoSerial(desempleo, many=True).data
         comunaSer['desempleo'] = desempleoSer
         
-        poblacion = Poblacion.objects.filter(comuna_id=id)
-        poblacionSer = PoblacionSerial(poblacion, many=True).data
-        comunaSer['poblacion'] = poblacionSer
+#        poblacion = Poblacion.objects.filter(comuna_id=id)
+#        poblacionSer = PoblacionSerial(poblacion, many=True).data
+#        comunaSer['poblacion'] = poblacionSer
+
+        comunaSer['poblacion_adultos_cnt'] = Poblacion.objects.filter(anno=2016, comuna_id=comunaSer['id']).aggregate(total=Sum('padron_cnt'))['total'];
+        comunaSer['poblacion_adultos_idx'] = (comunaSer['poblacion_adultos_cnt'] * 100.0) / Poblacion.objects.filter(anno=2016).aggregate(total=Sum('padron_cnt'))['total'];
+        
+        representantes = Representante.objects.filter(comuna_id=id)
+        representantesSer = RepresentanteSerial(representantes, many=True).data
+        comunaSer['candidatos_alcalde'] = representantesSer
 
         tipos = EleccionTipo.objects.filter(eleccion_grupo_id=tipo_id)
 
@@ -173,6 +257,10 @@ class CandidatoDetail(APIView):
         candidato = Candidato.objects.get(pk=id)
         candidatoSer = CandidatoSerial(candidato, many=False).data
         
+        representantes = Representante.objects.filter(candidato_id=id)
+        representantesSer = RepresentanteSerial(representantes[0], many=False).data
+        candidatoSer['actual'] = representantesSer
+        
         municipales = Resultado.objects.filter(Q(candidato_id=id) & (Q(eleccion_tipo_id=4) | Q(eleccion_tipo_id=5))).order_by('-anno')
         municipalesSer = ResultadoSerial(municipales, many=True).data
         
@@ -204,11 +292,13 @@ class CandidatoDetail(APIView):
 
 class CandidatoList(APIView):
     def get(self, request, format=None):
-        candidatos = Candidato.objects.filter(resultado__eleccion_tipo_id=5, resultado__anno=2012)
+        representantes = Representante.objects.all()
+        representantesSer = RepresentanteSerial(representantes, many=True).data
+        #candidatos = Candidato.objects.filter(resultado__eleccion_tipo_id=5, resultado__anno=2012)
         #candidatos = Candidato.objects.all()
-        candidatosSer = CandidatoSerial(candidatos, many=True)
+        #candidatosSer = CandidatoSerial(candidatos, many=True)
         
-        return Response(candidatosSer.data)
+        return Response(representantesSer)
 
 class ComunaRanking(APIView):
     def get(self, request, tipo_id, format=None):
@@ -233,7 +323,7 @@ class ComunaRanking(APIView):
                 comunaSer['participacion'] = row[3]
                 ranking_menor_participacion_regiones.append(comunaSer)
 
-            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id=13 AND p.eleccion_tipo_id=5 ORDER BY diff LIMIT 10", [eleccion['anno']])
+            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id=13 AND p.eleccion_tipo_id=5 AND padron_cnt>100000 ORDER BY diff LIMIT 10", [eleccion['anno']])
             rows = cursor.fetchall()
             for row in rows:
                 comuna = Comuna.objects.get(pk=row[0])
@@ -253,7 +343,7 @@ class ComunaRanking(APIView):
                 comunaSer['participacion'] = row[3]
                 ranking_mayor_participacion_regiones.append(comunaSer)
 
-            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id=13 AND p.eleccion_tipo_id=5 ORDER BY diff DESC LIMIT 10", [eleccion['anno']])
+            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id=13 AND p.eleccion_tipo_id=5 AND padron_cnt>100000 ORDER BY diff DESC LIMIT 10", [eleccion['anno']])
             rows = cursor.fetchall()
             for row in rows:
                 comuna = Comuna.objects.get(pk=row[0])
