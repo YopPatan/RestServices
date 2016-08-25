@@ -16,6 +16,13 @@ class ComunaSerial(serializers.ModelSerializer):
         model = Comuna
         fields = ('id', 'nombre')
 
+class ComunaFullSerial(serializers.ModelSerializer):
+    region = RegionSerial(many=False, read_only=True, required=False)
+    
+    class Meta:
+        model = Comuna
+        fields = ('id', 'nombre', 'region')
+
 class AmbienteSerial(serializers.ModelSerializer):
     comuna = ComunaSerial(many=False, read_only=True, required=False)
     

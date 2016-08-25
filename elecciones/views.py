@@ -1,5 +1,5 @@
 from models import Region, Comuna, Participacion, Resultado, Poblacion, Pacto, Partido, Candidato, EleccionFecha, EleccionTipo, EleccionGrupo, Educacion, Delincuencia, Pobreza, Salud, Desempleo, Ambiente, Representante
-from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial, DesempleoSerial, AmbienteSerial, EleccionGrupoSerial, RepresentanteSerial
+from serializers import ComunaSerial, ParticipacionSerial, ResultadoSerial, PactoSerial, CandidatoSerial, PartidoSerial, EleccionSerial, RegionSerial, EleccionTipoSerial, EducacionSerial, DelincuenciaSerial, PobrezaSerial, PoblacionSerial, SaludSerial, DesempleoSerial, AmbienteSerial, EleccionGrupoSerial, RepresentanteSerial, ComunaFullSerial
 #from django.db import connection
 from django.db import connections
 
@@ -161,11 +161,11 @@ class ComunaDetail(APIView):
     
     def get(self, request, id, tipo_id, format=None):
         comuna = Comuna.objects.get(pk=id)
-        comunaSer = ComunaSerial(comuna, many=False).data
+        comunaSer = ComunaFullSerial(comuna, many=False).data
         
-        region = Region.objects.get(pk=comuna.region.id)
-        regionSer = RegionSerial(region, many=False).data
-        comunaSer['region'] = regionSer
+#        region = Region.objects.get(pk=comuna.region.id)
+#        regionSer = RegionSerial(region, many=False).data
+#        comunaSer['region'] = regionSer
 
         delincuencia = Delincuencia.objects.filter(comuna_id=id)
         delincuenciaSer = DelincuenciaSerial(delincuencia, many=True).data
@@ -220,10 +220,16 @@ class ComunaDetail(APIView):
         comunaSer['candidatos_alcalde'] = representantesSer
 
         tipos = EleccionTipo.objects.filter(eleccion_grupo_id=tipo_id)
-
+        
         for tipo in tipos:
+            
+            min_anno = Participacion.objects.filter(comuna_id=id, eleccion_tipo_id=tipo.id).aggregate(Min('anno'))
+            print min_anno
 
-            elecciones = EleccionFecha.objects.filter(eleccion_tipo_id=tipo.id).order_by('-anno');
+            if min_anno['anno__min'] == None:
+                continue
+            
+            elecciones = EleccionFecha.objects.filter(eleccion_tipo_id=tipo.id, anno__gte=min_anno['anno__min']).order_by('-anno');
             eleccionesSer = EleccionSerial(elecciones, many=True).data
             
             for eleccion in eleccionesSer:
@@ -247,8 +253,8 @@ class ComunaDetail(APIView):
     
 class ComunaList(APIView):
     def get(self, request, format=None):
-        comunas = Comuna.objects.all()
-        comunasSer = ComunaSerial(comunas, many=True)
+        comunas = Comuna.objects.filter(~Q(id = 0))
+        comunasSer = ComunaFullSerial(comunas, many=True)
         
         return Response(comunasSer.data)
 
@@ -313,7 +319,7 @@ class ComunaRanking(APIView):
             ranking_mayor_participacion_rm = []
             ranking_diff_votos = []
             
-            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id!=13 AND p.eleccion_tipo_id=5 ORDER BY diff LIMIT 10", [eleccion['anno']])
+            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id!=13 AND p.eleccion_tipo_id=5 AND padron_cnt>100000 ORDER BY diff LIMIT 10", [eleccion['anno']])
             rows = cursor.fetchall()
             for row in rows:
                 comuna = Comuna.objects.get(pk=row[0])
@@ -333,7 +339,7 @@ class ComunaRanking(APIView):
                 comunaSer['participacion'] = row[3]
                 ranking_menor_participacion_rm.append(comunaSer)
 
-            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id!=13 AND p.eleccion_tipo_id=5 ORDER BY diff DESC LIMIT 10", [eleccion['anno']])
+            cursor.execute("SELECT po.comuna_id, emitidos_cnt, padron_cnt, emitidos_cnt / padron_cnt as diff from participacion p, poblacion po, comuna c where c.id=p.comuna_id AND p.anno=%s and p.anno=po.anno AND p.comuna_id=po.comuna_id AND c.region_id!=13 AND p.eleccion_tipo_id=5 AND padron_cnt>100000 ORDER BY diff DESC LIMIT 10", [eleccion['anno']])
             rows = cursor.fetchall()
             for row in rows:
                 comuna = Comuna.objects.get(pk=row[0])
@@ -353,7 +359,7 @@ class ComunaRanking(APIView):
                 comunaSer['participacion'] = row[3]
                 ranking_mayor_participacion_rm.append(comunaSer)
         
-            cursor.execute("SELECT r1.comuna_id, r1.id as id1, r2.id as id2, r2.votos_cnt/r1.votos_cnt as diff FROM resultado r1, resultado r2 WHERE r1.anno=%s AND r1.eleccion_tipo_id=5 AND r1.eleccion_tipo_id=r2.eleccion_tipo_id and r1.anno=r2.anno and r1.comuna_id=r2.comuna_id and r1.posicion=1 and r2.posicion=2 ORDER BY diff DESC LIMIT 5", [eleccion['anno']])
+            cursor.execute("SELECT r1.comuna_id, r1.id as id1, r2.id as id2, r2.votos_cnt/r1.votos_cnt as diff, r1.votos_cnt * 100 / p.validos_cnt as votos_idx1, r2.votos_cnt * 100 / p.validos_cnt as votos_idx1 FROM resultado r1, resultado r2, participacion p WHERE p.anno=r1.anno and p.comuna_id=r1.comuna_id and p.eleccion_tipo_id=r1.eleccion_tipo_id and r1.anno=%s AND r1.eleccion_tipo_id=5 AND r1.eleccion_tipo_id=r2.eleccion_tipo_id and r1.anno=r2.anno and r1.comuna_id=r2.comuna_id and r1.posicion=1 and r2.posicion=2 ORDER BY diff DESC LIMIT 5", [eleccion['anno']])
             rows = cursor.fetchall()
             for row in rows:
                 comuna = Comuna.objects.get(pk=row[0])
@@ -363,7 +369,9 @@ class ComunaRanking(APIView):
                 
                 comunaSer = ComunaSerial(comuna, many=False).data
                 resultadosSer1 = ResultadoSerial(resultado1, many=False).data
+                resultadosSer1['votos_idx'] = row[4]
                 resultadosSer2 = ResultadoSerial(resultado2, many=False).data
+                resultadosSer2['votos_idx'] = row[5]
                 resultado = [resultadosSer1, resultadosSer2]
                 ranking_diff_votos.append({'poblacion': poblacion, 'comuna': comunaSer, 'resultados': resultado})
             
