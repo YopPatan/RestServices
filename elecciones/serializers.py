@@ -9,7 +9,7 @@ class EleccionGrupoSerial(serializers.ModelSerializer):
 class RegionSerial(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ('id', 'nombre', 'numero')
+        fields = ('id', 'nombre', 'numero', 'orden')
 
 class ComunaSerial(serializers.ModelSerializer):
     class Meta:
@@ -120,6 +120,6 @@ class RepresentanteSerial(serializers.ModelSerializer):
     
     class Meta:
         model = Representante
-        fields = ('comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'imagen', 'facebook', 'twitter')
+        fields = ('id', 'comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'imagen', 'facebook', 'twitter')
 
         

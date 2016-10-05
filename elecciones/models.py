@@ -6,6 +6,7 @@ from boto.dynamodb.condition import NULL
 class Region(models.Model):
     nombre = models.CharField(max_length=255)
     numero = models.IntegerField()
+    orden = models.IntegerField()
 
     class Meta:
         managed = False
