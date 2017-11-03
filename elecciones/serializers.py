@@ -120,6 +120,6 @@ class RepresentanteSerial(serializers.ModelSerializer):
     
     class Meta:
         model = Representante
-        fields = ('id', 'comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'imagen', 'facebook', 'twitter')
+        fields = ('id', 'comuna', 'eleccion_tipo', 'candidato', 'partido', 'pacto', 'imagen', 'facebook', 'twitter', 'patrimonio')
 
         

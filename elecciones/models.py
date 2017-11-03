@@ -235,6 +235,7 @@ class Representante(models.Model):
 #    partido_txt = models.CharField(max_length=255)
     pacto = models.ForeignKey(Pacto, models.DO_NOTHING)
 #    pacto_txt = models.CharField(max_length=255)
+    patrimonio = models.CharField(max_length=255)
     imagen = models.CharField(max_length=255)
     facebook = models.CharField(max_length=255)
     twitter = models.CharField(max_length=255)
